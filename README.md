@@ -37,8 +37,8 @@ npm install trackball-controller
 var trackball = new Trackball(targetElement, {opts})
 ```
 
-Creates a new trackball object and kicks off a 60FPS internal loop to update the
-momentum of the trackball. Listens to mousedown events on the `targetElement`
+Creates a new `Trackball` object and kicks off a 60FPS internal loop to update the
+momentum of the trackball. Listens to `mousedown` events on the `targetElement`
 DOM element.
 
 #### Options
@@ -54,14 +54,14 @@ DOM element.
 
 * `speed` is how many radians are rotated per pixel the mouse is dragged.
   Defaults to `0.005` radians/pixel.
-* `container` is the element that will listen to mouseup and mousemove events.
+* `container` is the element that will listen to `mouseup` and `mousemove` events.
   This allows the user to interact with the trackball even outside of the bounds
-  of the targetElement. Defaults to `window`, which will maximize the
+  of the `targetElement`. Defaults to `window`, which will maximize the
   interactive region.
 * `onRotate` is a callback function triggered whenever the trackball rotates,
   either through user interaction via the mouse or during momentum-compelled
   motion. Defaults to an empty function.
 * `drag` is what fraction of the trackball's momentum is lost during internal
-  loop iterations. Set to `0.0` for to make the trackball spin indefinitely,
+  loop iterations. Set to `0.0` to make the trackball spin forever,
   `1.0` to make it spin not at all outside of mouse interaction, or somewhere
   in between to make the spin gradually degrade to zero.
