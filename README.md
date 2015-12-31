@@ -50,7 +50,8 @@ DOM element.
     speed: 0.005,
     container: window,
     onRotate: function() {},
-    drag: 0.0
+    drag: 0.0,
+    invert: false
 }
 ```
 
@@ -62,8 +63,10 @@ DOM element.
   interactive region.
 * `onRotate` is a callback function triggered whenever the trackball rotates,
   either through user interaction via the mouse or during momentum-compelled
-  motion. Defaults to an empty function.
+  motion. Defaults to an empty function. Defaults to `noop` function.
 * `drag` is what fraction of the trackball's momentum is lost during internal
   loop iterations. Set to `0.0` to make the trackball spin forever,
   `1.0` to make it spin not at all outside of mouse interaction, or somewhere
-  in between to make the spin gradually degrade to zero.
+  in between to make the spin gradually degrade to zero. Defaults to `0.0`.
+* `invert` declares whether or not to invert the motion of the trackball. Useful
+  for rotating objects around the viewer, such as a skybox. Defaults to `false`.

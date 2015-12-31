@@ -9,6 +9,9 @@ module.exports = function Trackball(element, opts) {
     var container = opts.container || window;
     var onRotate = opts.onRotate || function() {};
     var drag = opts.drag || 0.0;
+    var invert = opts.invert || false;
+
+    invert = invert ? -1 : 1;
 
     self.rotation = mat4.create();
 
@@ -66,8 +69,8 @@ module.exports = function Trackball(element, opts) {
 
     container.addEventListener('mousemove', function(e) {
         if (!mouse.down) return;
-        mouse.dx = e.clientX - mouse.x;
-        mouse.dy = e.clientY - mouse.y;
+        mouse.dx = invert * (e.clientX - mouse.x);
+        mouse.dy = invert * (e.clientY - mouse.y);
         mouse.x = e.clientX;
         mouse.y = e.clientY;
         self.rotate(mouse.dx, mouse.dy);
