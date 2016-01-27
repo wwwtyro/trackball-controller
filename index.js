@@ -5,6 +5,7 @@ module.exports = function Trackball(element, opts) {
 
     var self = this;
 
+    opts = opts || {};
     var speed = opts.speed || 0.005;
     var container = opts.container || window;
     var onRotate = opts.onRotate || function() {};
