@@ -1,80 +1,114 @@
 
-var mat4 = require('gl-mat4');
+const pepjs = require('pepjs'); // eslint-disable-line no-unused-vars
+const mat4 = require('gl-matrix').mat4;
+const defaults = require('defaults');
 
-module.exports = function Trackball(element, opts) {
+module.exports = function Trackball(element, opts = {}) {
 
-    var self = this;
+  opts = defaults(opts, {
+    speed: 0.005,
+    onRotate: function(){},
+    drag: 0.0,
+    invert: false,
+    hideCursor: false,
+  });
 
-    opts = opts || {};
-    var speed = opts.speed || 0.005;
-    var container = opts.container || window;
-    var onRotate = opts.onRotate || function() {};
-    var drag = opts.drag || 0.0;
-    var invert = opts.invert || false;
+  const invert = opts.invert ? -1 : 1;
+  const rotation = mat4.create();
+  let disposed = false;
+  let oldElementCursorStyle = element.style.cursor;
 
-    invert = invert ? -1 : 1;
+  const pointer = {
+    x: 0,
+    y: 0,
+    dx: 0,
+    dy: 0,
+    down: false,
+  };
 
-    self.rotation = mat4.create();
+  function rotate(dx, dy) {
+    const rot = mat4.create();
+    mat4.rotateY(rot, rot, dx * opts.speed);
+    mat4.rotateX(rot, rot, dy * opts.speed);
+    mat4.multiply(rotation, rot, rotation);
+    opts.onRotate();
+  }
 
-    var mouse = {
-        x: 0,
-        y: 0,
-        dx: 0,
-        dy: 0,
-        dz: 0,
-        down: false
-    };
+  function spin(dx, dy) {
+    pointer.dx = dx;
+    pointer.dy = dy;
+  }
 
-    self.rotate = function(dx, dy) {
-        var rot = mat4.create();
-        mat4.rotateY(rot, rot, dx * speed);
-        mat4.rotateX(rot, rot, dy * speed);
-        mat4.multiply(self.rotation, rot, self.rotation);
-        onRotate();
+  function update() {
+    if (disposed) return;
+    requestAnimationFrame(update);
+    if (pointer.down) {
+      pointer.dx = 0;
+      pointer.dy = 0;
     }
-
-    self.spin =function(dx, dy) {
-        mouse.dx = dx;
-        mouse.dy = dy;
+    if (Math.abs(pointer.dx * opts.speed) < 0.0001 && Math.abs(pointer.dy * opts.speed) < 0.0001) {
+      pointer.dx = 0;
+      pointer.dy = 0;
     }
+    if (pointer.dx === 0 && pointer.dy === 0) {
+      return;
+    }
+    pointer.dx -= pointer.dx * opts.drag;
+    pointer.dy -= pointer.dy * opts.drag;
+    rotate(pointer.dx, pointer.dy);
+  }
 
-    function update() {
-        requestAnimationFrame(update);
-        if (mouse.down) {
-            mouse.dx = 0;
-            mouse.dy = 0;
-            return;
-        }
-        if (Math.abs(mouse.dx * speed) < 0.0001) mouse.dx = 0.0;
-        if (Math.abs(mouse.dy * speed) < 0.0001) mouse.dy = 0.0;
-        if (mouse.dx === 0 && mouse.dy === 0) return;
-        mouse.dx -= mouse.dx * drag;
-        mouse.dy -= mouse.dy * drag;
-        self.rotate(mouse.dx, mouse.dy);
-    };
+  update();
 
-    update();
+  function onPointerDown(e) {
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
+    pointer.dx = 0;
+    pointer.dy = 0;
+    pointer.down = true;
+    element.setPointerCapture(e.pointerId);
+    if (opts.hideCursor) {
+      oldElementCursorStyle = element.style.cursor;
+      element.style.cursor = 'none';
+    }
+    e.preventDefault();
+  }
 
-    element.addEventListener('mousedown', function(e) {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-        mouse.dx = 0;
-        mouse.dy = 0;
-        mouse.down = true;
-        e.preventDefault();
-    });
+  function onPointerUp() {
+    pointer.down = false;
+    element.style.cursor = oldElementCursorStyle;
+  }
 
-    container.addEventListener('mouseup', function(e) {
-        mouse.down = false;
-    });
+  function onPointerMove(e) {
+    if (!pointer.down) return;
+    pointer.dx = invert * (e.clientX - pointer.x);
+    pointer.dy = invert * (e.clientY - pointer.y);
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
+    rotate(pointer.dx, pointer.dy);
+  }
 
-    container.addEventListener('mousemove', function(e) {
-        if (!mouse.down) return;
-        mouse.dx = invert * (e.clientX - mouse.x);
-        mouse.dy = invert * (e.clientY - mouse.y);
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-        self.rotate(mouse.dx, mouse.dy);
-    });
+  function onPointerCancel(e) {
+    element.releasePointerCapture(e.pointerId);
+  }
 
-}
+  element.addEventListener('pointerdown', onPointerDown);
+  element.addEventListener('pointerup', onPointerUp);
+  element.addEventListener('pointermove', onPointerMove);
+  element.addEventListener('pointercancel', onPointerCancel);
+
+  function dispose() {
+    element.removeEventListener('pointerdown', onPointerDown);
+    element.removeEventListener('pointerup', onPointerUp);
+    element.removeEventListener('pointermove', onPointerMove);
+    element.removeEventListener('pointercancel', onPointerCancel);
+    disposed = true;
+  }
+
+  return {
+    spin: spin,
+    rotation: rotation,
+    dispose: dispose,
+  };
+
+};
